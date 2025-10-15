@@ -103,7 +103,6 @@ export class PostgresService {
     if (this.pool) {
       await this.pool.end();
       this.pool = null;
-      console.log('Disconnected from Postgres.');
     }
   }
 }

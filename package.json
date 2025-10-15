@@ -6,13 +6,16 @@
   "scripts": {
     "start": "node dist/app.js",
     "build": "tsc",
-    "test": "jest",
     "dev": "nodemon --exec ts-node src/app.ts",
     "migrate:create": "dotenv -e .env -- node-pg-migrate create -m src/migrations",
     "migrate:up": "dotenv -e .env -- node-pg-migrate up -m src/migrations",
     "migrate:down": "dotenv -e .env -- node-pg-migrate down -m src/migrations",
     "migrate:reset": "dotenv -e .env -- node-pg-migrate reset -m src/migrations",
-    "seed:users": "dotenv -e .env -- npm run build && node dist/scripts/seedUsers.js"
+    "seed:users": "dotenv -e .env -- npm run build && node dist/scripts/seedUsers.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose"
   },
   "keywords": [
     "node",
