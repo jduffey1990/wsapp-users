@@ -1,0 +1,39 @@
+version: 0.2
+
+env:
+  variables:
+    FUNCTION_NAME: wsapp-users
+    ALIAS: prod
+    # DATABASE_URL should be set as an environment variable in CodeBuild project settings
+    # or pulled from Systems Manager Parameter Store / Secrets Manager
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "Installing dependencies..."
+      - npm ci  # Clean install from package-lock.json
+      
+  pre_build:
+    commands:
+      - echo "Running database migrations..."
+      - npm run migrate:up
+      
+  build:
+    commands:
+      - echo "Building TypeScript..."
+      - npm run build
+      - echo "Installing production dependencies for Lambda..."
+      - npm ci --omit=dev
+      - echo "Packaging Lambda function..."
+      - node deploy.js
+      
+  post_build:
+    commands:
+      - echo "Lambda deployment completed"
+
+artifacts:
+  files:
+    - '**/*'
+  discard-paths: no
