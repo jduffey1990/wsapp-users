@@ -14,14 +14,14 @@ import type { User, UserSafe } from '../models/user';          // our TS model (
 
 export const userRoutes : ServerRoute[] = [
   // find all them hoes
-  // { 
-  //   method: 'GET', 
-  //   path: '/users', 
-  //   handler: (request: Request, h: ResponseToolkit) => { 
-  //     return UserService.findAllUsers() 
-  //   }, 
-  //   options: { auth: false  } 
-  // },
+  { 
+    method: 'GET', 
+    path: '/users', 
+    handler: (request: Request, h: ResponseToolkit) => { 
+      return UserService.findAllUsers() 
+    }, 
+    options: { auth: false  } 
+  },
 
   // Simple health check
   {
@@ -50,7 +50,7 @@ export const userRoutes : ServerRoute[] = [
       if (!user) return h.response({ error: 'User not found' }).code(404);
       return h.response(user).code(200);
     },
-    options: { auth: false },
+    options: { auth: 'jwt' },
   },
 
   // Update the authenticated user's name/email
@@ -59,23 +59,36 @@ export const userRoutes : ServerRoute[] = [
     path: '/edit-user',
     handler: async (request: Request, h: ResponseToolkit) => {
       try {
-        // Your JWT validate step returns credentials = UserSafe
         const authUser = request.auth.credentials as UserSafe | undefined;
         if (!authUser?.id) return h.response({ error: 'Unauthorized' }).code(401);
 
-        const account = request.payload as {
+        const payload = request.payload as Partial<{
+          name: string;
+          email: string;
+          status: string;
+          companyId: string | null;
+          // Or support firstName/lastName separately:
           firstName: string;
           lastName: string;
-          email: string;
-        };
+        }>;
 
-        const updatedUser = await UserService.userUpdateInfo(authUser.id, account);
+        // If firstName/lastName provided, convert to name
+        const updates: any = { ...payload };
+        if (payload.firstName || payload.lastName) {
+          const firstName = payload.firstName || authUser.name.split(' ')[0] || '';
+          const lastName = payload.lastName || authUser.name.split(' ').slice(1).join(' ') || '';
+          updates.name = `${firstName} ${lastName}`.trim();
+          delete updates.firstName;
+          delete updates.lastName;
+        }
+
+        const updatedUser = await UserService.updateUser(authUser.id, updates);
         return h.response(updatedUser).code(200);
       } catch (error: any) {
         return h.response({ error: error.message }).code(500);
       }
     },
-    options: { auth: false },
+    options: { auth: 'jwt' },
   },
 
   // Update the authenticated user's name/email
@@ -94,7 +107,7 @@ export const userRoutes : ServerRoute[] = [
         return h.response({ error: error.message }).code(500);
       }
     },
-    options: { auth: false },
+    options: { auth: 'jwt' },
   },
 
   // Return the current session's user (already validated by @hapi/jwt)
@@ -105,7 +118,7 @@ export const userRoutes : ServerRoute[] = [
       const user = request.auth.credentials as UserSafe | undefined;
       return { user };
     },
-    options: { auth: false },
+    options: { auth: 'jwt' },
   },
 
   // Create a new user (public signup)

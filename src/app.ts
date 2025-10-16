@@ -8,8 +8,17 @@ import { PostgresService } from './controllers/postgres.service'
 import { AuthService } from './controllers/authService'
 import { homeRoutes, loginRoutes } from './routes/loginRoutes'
 import { userRoutes } from './routes/userRoutes'
+import { url } from 'inspector'
 
 dotenv.config()
+
+console.log('[DB cfg]', {
+  host: process.env.PGHOST,
+  db: process.env.PGDATABASE,
+  user: process.env.PGUSER,
+  port: process.env.PGPORT,
+  url: process.env.DATABASE_URL,
+});
 
 const NODE_ENV = process.env.NODE_ENV || 'development'
 const IS_LAMBDA = NODE_ENV === 'production' || !!process.env.LAMBDA_TASK_ROOT
@@ -56,7 +65,6 @@ async function buildServer() {
     verify: { aud: false, iss: false, sub: false, maxAgeSec: 60 * 60 * 4 },
     validate: AuthService.validateToken,
   })
-  server.auth.default('jwt')
 
   // >>> The call that failed:
   // Make sure the array is typed as ServerRoute[]

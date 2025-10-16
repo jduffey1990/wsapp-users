@@ -17,7 +17,8 @@ exports.homeRoutes = [
         path: '/',
         handler: (request, h) => {
             return 'Welcome to the restricted home page!';
-        }
+        },
+        options: { auth: 'jwt' } // Allow unauthenticated access for login
     }
 ];
 exports.loginRoutes = [

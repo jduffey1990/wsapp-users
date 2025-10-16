@@ -22,6 +22,13 @@ const authService_1 = require("./controllers/authService");
 const loginRoutes_1 = require("./routes/loginRoutes");
 const userRoutes_1 = require("./routes/userRoutes");
 dotenv_1.default.config();
+console.log('[DB cfg]', {
+    host: process.env.PGHOST,
+    db: process.env.PGDATABASE,
+    user: process.env.PGUSER,
+    port: process.env.PGPORT,
+    url: process.env.DATABASE_URL,
+});
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_LAMBDA = NODE_ENV === 'production' || !!process.env.LAMBDA_TASK_ROOT;
 const PORT = Number(process.env.PORT || 3000);
@@ -61,7 +68,6 @@ function buildServer() {
             verify: { aud: false, iss: false, sub: false, maxAgeSec: 60 * 60 * 4 },
             validate: authService_1.AuthService.validateToken,
         });
-        server.auth.default('jwt');
         // >>> The call that failed:
         // Make sure the array is typed as ServerRoute[]
         server.route(allRoutes);

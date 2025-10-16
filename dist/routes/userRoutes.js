@@ -21,14 +21,14 @@ const userService_1 = require("../controllers/userService");
 // });
 exports.userRoutes = [
     // find all them hoes
-    // { 
-    //   method: 'GET', 
-    //   path: '/users', 
-    //   handler: (request: Request, h: ResponseToolkit) => { 
-    //     return UserService.findAllUsers() 
-    //   }, 
-    //   options: { auth: false  } 
-    // },
+    {
+        method: 'GET',
+        path: '/users',
+        handler: (request, h) => {
+            return userService_1.UserService.findAllUsers();
+        },
+        options: { auth: false }
+    },
     // Simple health check
     {
         method: 'GET',
@@ -55,7 +55,7 @@ exports.userRoutes = [
                 return h.response({ error: 'User not found' }).code(404);
             return h.response(user).code(200);
         }),
-        options: { auth: false },
+        options: { auth: 'jwt' },
     },
     // Update the authenticated user's name/email
     {
@@ -75,7 +75,7 @@ exports.userRoutes = [
                 return h.response({ error: error.message }).code(500);
             }
         }),
-        options: { auth: false },
+        options: { auth: 'jwt' },
     },
     // Update the authenticated user's name/email
     {
@@ -94,7 +94,7 @@ exports.userRoutes = [
                 return h.response({ error: error.message }).code(500);
             }
         }),
-        options: { auth: false },
+        options: { auth: 'jwt' },
     },
     // Return the current session's user (already validated by @hapi/jwt)
     {
@@ -104,7 +104,7 @@ exports.userRoutes = [
             const user = request.auth.credentials;
             return { user };
         }),
-        options: { auth: false },
+        options: { auth: 'jwt' },
     },
     // Create a new user (public signup)
     {

@@ -83,22 +83,47 @@ export class UserService {
   /**
    * Update user basic info by id (name + email).
    */
-  public static async userUpdateInfo(
+  /**
+   * Update user fields dynamically - only updates fields that are provided
+   */
+  public static async updateUser(
     userId: string,
-    account: { firstName: string; lastName: string; email: string }
+    updates: Partial<{
+      name: string;
+      email: string;
+      status: string;
+      companyId: string | null;
+    }>
   ): Promise<UserSafe> {
     const db = PostgresService.getInstance();
-    const fullName = `${account.firstName} ${account.lastName}`.trim();
-
-    const { rows } = await db.query(
-      `UPDATE users
-          SET name = $1,
-              email = $2
-        WHERE id = $3::uuid
-        RETURNING id, company_id, email, name, status, deleted_at, created_at, updated_at`,
-      [fullName, account.email, userId]
-    );
-
+    
+    // Filter out undefined values (but keep null for companyId)
+    const fields = Object.entries(updates).filter(([_, value]) => value !== undefined);
+    
+    if (fields.length === 0) {
+      throw new Error('No fields to update');
+    }
+    
+    // Build dynamic SET clause
+    const setClauses = fields.map(([key, _], index) => {
+      // Convert camelCase to snake_case for DB columns
+      const dbColumn = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+      return `${dbColumn} = $${index + 1}`;
+    });
+    
+    const values = fields.map(([_, value]) => value);
+    values.push(userId); // Add userId as last parameter
+    
+    const query = `
+      UPDATE users
+      SET ${setClauses.join(', ')},
+          updated_at = NOW()
+      WHERE id = $${values.length}::uuid
+      RETURNING id, company_id, email, name, status, deleted_at, created_at, updated_at
+    `;
+    
+    const { rows } = await db.query(query, values);
+    
     if (!rows[0]) throw new Error('User not found');
     return mapRowToUser(rows[0]);
   }
