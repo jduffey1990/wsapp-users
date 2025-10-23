@@ -62,8 +62,19 @@ export class AuthService {
 
       // Create JWT (keep payload minimal)
       const token = Jwt.token.generate(
-        { id: safe.id, email: safe.email },
-        jwtSecret
+        { 
+          id: safe.id, 
+          email: safe.email,
+          companyId: safe.companyId,
+          name: safe.name
+        },
+        { 
+          key: jwtSecret,
+          algorithm: 'HS256'
+        },
+        {
+          ttlSec: 7 * 24 * 60 * 60  // ✅ 7 days expiration
+        }
       );
       return { isValid: true, credentials: safe, token };
       

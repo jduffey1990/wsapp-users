@@ -2,6 +2,7 @@
 import { Request, ResponseToolkit, ServerRoute } from '@hapi/hapi';
 import bcrypt from 'bcrypt';
 import Stripe from 'stripe';
+import axios from 'axios';
 
 import { UserService } from '../controllers/userService';
 import type { User, UserSafe } from '../models/user';          // our TS model (id is string UUID)
@@ -11,6 +12,49 @@ import type { User, UserSafe } from '../models/user';          // our TS model (
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 //   apiVersion: '2025-02-24.acacia', // if this blows up, omit apiVersion to use pkg default
 // });
+async function verifyCaptcha(token: string | null, minScore = 0.5): Promise<{ success: boolean; score: number | null }> {
+  if (!token) {
+    console.warn('No CAPTCHA token provided');
+    // During development, you can allow this
+    return { success: true, score: null };
+  }
+
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secretKey) {
+    console.warn('RECAPTCHA_SECRET_KEY not set - skipping verification');
+    return { success: true, score: null };
+  }
+
+  try {
+    const response = await axios.post(
+      'https://www.google.com/recaptcha/api/siteverify',
+      null,
+      {
+        params: {
+          secret: secretKey,
+          response: token,
+        },
+      }
+    );
+
+    const { success, score, action } = response.data;
+
+    if (!success) {
+      throw new Error('CAPTCHA verification failed');
+    }
+
+    if (score < minScore) {
+      throw new Error(`CAPTCHA score too low: ${score}`);
+    }
+
+    console.log(`CAPTCHA verified: score=${score}, action=${action}`);
+    return { success: true, score };
+  } catch (error: any) {
+    console.error('CAPTCHA verification error:', error.message);
+    throw error;
+  }
+}
+
 
 export const userRoutes : ServerRoute[] = [
   // find all them hoes
@@ -129,6 +173,19 @@ export const userRoutes : ServerRoute[] = [
       try {
         const payload = request.payload as any;
 
+        // 1. Verify CAPTCHA first
+        try {
+          await verifyCaptcha(payload.captchaToken, 0.5);
+        } catch (captchaError: any) {
+          return h
+            .response({ 
+              error: 'Security verification failed',
+              message: captchaError.message 
+            })
+            .code(400);
+        }
+
+        // 2. Validate required fields
         const name =
           payload.name?.toString().trim() ||
           `${payload.firstName ?? ''} ${payload.lastName ?? ''}`.trim();
@@ -139,14 +196,15 @@ export const userRoutes : ServerRoute[] = [
             .code(400);
         }
 
+        // 3. Hash password
         const passwordHash = await bcrypt.hash(payload.password, 10);
 
-        // If you capture companyId/status at signup, pass them here
+        // 4. Create user
         const newUser = await UserService.createUser({
           email: payload.email.toLowerCase(),
           name,
           passwordHash,
-          companyId: payload.companyId ?? null,
+          companyId: payload.brandId ?? null, // Note: using brandId from payload
           status: "inactive"
         });
 
@@ -162,5 +220,6 @@ export const userRoutes : ServerRoute[] = [
       }
     },
     options: { auth: false },
-  },
+  }
+
 ];
