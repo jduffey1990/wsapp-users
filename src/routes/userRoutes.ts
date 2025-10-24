@@ -181,6 +181,16 @@ export const userRoutes : ServerRoute[] = [
         console.log(`CAPTCHA took: ${Date.now() - captchaStart}ms`);
         
         // ... validation ...
+
+        const name =
+          payload.name?.toString().trim() ||
+          `${payload.firstName ?? ''} ${payload.lastName ?? ''}`.trim();
+        
+        if (!payload.email || !payload.password || !name) {
+          return h
+            .response({ error: 'email, password, and name are required' })
+            .code(400);
+        }
         
         console.log('Start password hash');
         const hashStart = Date.now();
