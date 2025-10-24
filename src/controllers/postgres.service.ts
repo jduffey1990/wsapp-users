@@ -68,8 +68,6 @@ export class PostgresService {
     return result;
   }
 
-  }
-
   /**
    * Get a client for multi-statement work (e.g., transactions).
    * You MUST release() the client, ideally via runInTransaction().
