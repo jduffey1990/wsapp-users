@@ -93,9 +93,6 @@ async function startLocal() {
 
 // ---------- Lambda entry ----------
 export const handler = async (event: any, context: any) => {
-  // Add logging
-  console.log('Event:', JSON.stringify(event, null, 2));
-  console.log('Body:', event.body);
   
   try {
     if (!cachedLambdaHandler) {
@@ -108,7 +105,6 @@ export const handler = async (event: any, context: any) => {
     }
     
     const result = await cachedLambdaHandler(event, context)
-    console.log('Result:', result);
     return result;
   } catch (error) {
     console.error('Lambda Error:', error);
