@@ -170,56 +170,41 @@ export const userRoutes : ServerRoute[] = [
     method: 'POST',
     path: '/create-user',
     handler: async (request: Request, h: ResponseToolkit) => {
+      const startTime = Date.now();
+      
       try {
         const payload = request.payload as any;
-
-        // 1. Verify CAPTCHA first
-        try {
-          await verifyCaptcha(payload.captchaToken, 0.5);
-        } catch (captchaError: any) {
-          return h
-            .response({ 
-              error: 'Security verification failed',
-              message: captchaError.message 
-            })
-            .code(400);
-        }
-
-        // 2. Validate required fields
-        const name =
-          payload.name?.toString().trim() ||
-          `${payload.firstName ?? ''} ${payload.lastName ?? ''}`.trim();
-
-        if (!payload.email || !payload.password || !name) {
-          return h
-            .response({ error: 'email, password, and name are required' })
-            .code(400);
-        }
-
-        // 3. Hash password
+        
+        console.log('Start CAPTCHA verification');
+        const captchaStart = Date.now();
+        await verifyCaptcha(payload.captchaToken, 0.5);
+        console.log(`CAPTCHA took: ${Date.now() - captchaStart}ms`);
+        
+        // ... validation ...
+        
+        console.log('Start password hash');
+        const hashStart = Date.now();
         const passwordHash = await bcrypt.hash(payload.password, 10);
-
-        // 4. Create user
+        console.log(`Hash took: ${Date.now() - hashStart}ms`);
+        
+        console.log('Start DB insert');
+        const dbStart = Date.now();
         const newUser = await UserService.createUser({
           email: payload.email.toLowerCase(),
           name,
           passwordHash,
-          companyId: payload.companyId ?? null, // Note: using brandId from payload
+          companyId: payload.companyId ?? null,
           status: "inactive"
         });
-
+        console.log(`DB insert took: ${Date.now() - dbStart}ms`);
+        
+        console.log(`Total handler time: ${Date.now() - startTime}ms`);
         return h.response(newUser).code(201);
       } catch (error: any) {
-        // Preserve your existing FE message for unique violations
-        if (error?.message?.includes('duplicate key value violates unique constraint')) {
-          return h
-            .response({ error: 'duplicate key value violates unique constraint' })
-            .code(400);
-        }
-        return h.response({ error: error.message }).code(500);
+        console.log(`Total time before error: ${Date.now() - startTime}ms`);
+        // ... error handling
       }
     },
-    options: { auth: false },
   },
 
   // Return the current session's user (already validated by @hapi/jwt)
