@@ -93,16 +93,34 @@ async function startLocal() {
 
 // ---------- Lambda entry ----------
 export const handler = async (event: any, context: any) => {
-  if (!cachedLambdaHandler) {
-    const server = await buildServer()
-    const listener = toRequestListener(server)
-    cachedLambdaHandler = serverlessExpress({ 
-      app: listener,
-      eventSourceName: 'AWS_API_GATEWAY_V2'  // <-- Add this!
-    })
+  // Add logging
+  console.log('Event:', JSON.stringify(event, null, 2));
+  console.log('Body:', event.body);
+  
+  try {
+    if (!cachedLambdaHandler) {
+      const server = await buildServer()
+      const listener = toRequestListener(server)
+      cachedLambdaHandler = serverlessExpress({ 
+        app: listener,
+        eventSourceName: 'AWS_API_GATEWAY_V2'
+      })
+    }
+    
+    const result = await cachedLambdaHandler(event, context)
+    console.log('Result:', result);
+    return result;
+  } catch (error) {
+    console.error('Lambda Error:', error);
+    if (error instanceof Error) {
+      console.error('Stack:', error.stack);
+    } else {
+      console.error('Non-Error thrown:', error);
+    }
+    throw error;
   }
-  return cachedLambdaHandler(event, context)
 }
+
 
 
 // ---------- Entrypoint ----------
