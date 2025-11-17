@@ -6,7 +6,7 @@ import { UserService } from '../controllers/userService';
 
 const emailService = new EmailService();
 
-// ===== SEND ACTIVATION EMAIL ROUTE =====
+
 export const tokenRoutes: ServerRoute[] = [
     {
         method: 'POST',

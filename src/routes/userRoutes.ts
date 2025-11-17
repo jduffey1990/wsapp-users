@@ -52,16 +52,6 @@ async function verifyCaptcha(token: string | null, minScore = 0.5): Promise<{ su
   }
 }
 
-// Helper function to generate activation token
-async function generateActivationToken(email: string): Promise<string> {
-  // Option 1: Random token stored in database
-  const token = randomBytes(32).toString('hex');
-  
-  await UserService
-  
-  return token;
-}
-
 
 export const userRoutes : ServerRoute[] = [
   // find all them hoes
