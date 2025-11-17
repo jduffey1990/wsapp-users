@@ -1,6 +1,6 @@
-# 👤 Brandora Users Microservice
+# 👤 Mozaiq Users Microservice
 
-This microservice handles all user-related functionality for the Brandora app, including authentication, account creation, and user data management. Built with Node.js, TypeScript, MongoDB, and Hapi.
+This microservice handles all user-related functionality for the Mozaiq app, including authentication, account creation, and user data management. Built with Node.js, TypeScript, MongoDB, and Hapi.
 
 ---
 
