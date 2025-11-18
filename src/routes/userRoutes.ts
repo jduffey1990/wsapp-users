@@ -43,8 +43,6 @@ async function verifyCaptcha(token: string | null, minScore = 0.5): Promise<{ su
     if (score < minScore) {
       throw new Error(`CAPTCHA score too low: ${score}`);
     }
-
-    console.log(`CAPTCHA verified: score=${score}, action=${action}`);
     return { success: true, score };
   } catch (error: any) {
     console.error('CAPTCHA verification error:', error.message);
@@ -171,14 +169,10 @@ export const userRoutes : ServerRoute[] = [
       
       try {
         const payload = request.payload as any;
-        
-        console.log('Start CAPTCHA verification');
         const captchaStart = Date.now();
         await verifyCaptcha(payload.captchaToken, 0.5);
-        console.log(`CAPTCHA took: ${Date.now() - captchaStart}ms`);
         
         // ... validation ...
-
         const name =
           payload.name?.toString().trim() ||
           `${payload.firstName ?? ''} ${payload.lastName ?? ''}`.trim();
@@ -189,12 +183,9 @@ export const userRoutes : ServerRoute[] = [
             .code(400);
         }
         
-        console.log('Start password hash');
         const hashStart = Date.now();
         const passwordHash = await bcrypt.hash(payload.password, 8);
-        console.log(`Hash took: ${Date.now() - hashStart}ms`);
         
-        console.log('Start DB insert');
         const dbStart = Date.now();
         const newUser = await UserService.createUser({
           email: payload.email.toLowerCase(),
@@ -203,12 +194,9 @@ export const userRoutes : ServerRoute[] = [
           companyId: payload.companyId ?? null,
           status: "inactive"
         });
-        console.log(`DB insert took: ${Date.now() - dbStart}ms`);
         
-        console.log(`Total handler time: ${Date.now() - startTime}ms`);
         return h.response(newUser).code(201);
       } catch (error: any) {
-        console.log(`Total time before error: ${Date.now() - startTime}ms`);
         console.error('Create user error:', error);
         
         // Handle duplicate email

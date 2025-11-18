@@ -19,8 +19,6 @@ export const loginRoutes: ServerRoute [] = [
     handler: async (request: Request, h: ResponseToolkit) => {
       // Change username to email:
       const { email, password } = request.payload as { email: string; password: string };
-      
-      console.log('[loginRoutes] Login attempt:', { email, hasPassword: !!password });
 
       const { isValid, credentials: user, token } = await AuthService.validateUser(request, email, password, h);
       
