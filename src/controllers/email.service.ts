@@ -17,14 +17,14 @@ export class EmailService {
     this.sesClient = new SESClient({ 
       region: process.env.AWS_REGION || 'us-east-1' 
     });
-    this.fromEmail = process.env.FROM_EMAIL || 'noreply@foxdogdevelopment.com';
+    this.fromEmail = process.env.FROM_EMAIL || 'noreply@mozaiqretail.com';
   }
 
   /**
    * Send account activation email
    */
   async sendActivationEmail(email: string, activationToken: string): Promise<void> {
-    const activationUrl = `${process.env.APP_URL}/#/activate/${activationToken}`;
+    const activationUrl = `${process.env.APP_URL}/activate/${activationToken}`;
     
     const subject = 'Activate Your Mozaiq Account';
     

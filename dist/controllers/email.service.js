@@ -17,7 +17,7 @@ class EmailService {
         this.sesClient = new client_ses_1.SESClient({
             region: process.env.AWS_REGION || 'us-east-1'
         });
-        this.fromEmail = process.env.FROM_EMAIL || 'noreply@foxdogdevelopment.com';
+        this.fromEmail = process.env.FROM_EMAIL || 'noreply@mozaiqretail.com';
     }
     /**
      * Send account activation email
