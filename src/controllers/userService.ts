@@ -164,6 +164,25 @@ export class UserService {
     return mapRowToUser(rows[0]);
   }
 
+  public static async updatePassword(
+    userId: string,
+    newPasswordHash: string
+  ): Promise<UserSafe> {
+    const db = PostgresService.getInstance();
+    
+    const { rows } = await db.query(
+      `UPDATE users
+      SET password_hash = $1,
+          updated_at = NOW()
+      WHERE id = $2::uuid
+      RETURNING id, company_id, email, name, status, deleted_at, created_at, updated_at`,
+      [newPasswordHash, userId]
+    );
+    
+    if (!rows[0]) throw new Error('User not found');
+    return mapRowToUser(rows[0]);
+  }
+
   /**
    * Soft delete (optional): set deleted_at; keep row for audit.
    */

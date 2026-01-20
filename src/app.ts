@@ -1,15 +1,15 @@
 // app.ts
-import dotenv from 'dotenv'
 import Hapi, { type ServerRoute } from '@hapi/hapi'
 import serverlessExpress from '@vendia/serverless-express'
-import type { RequestListener, IncomingMessage, ServerResponse } from 'http'
+import dotenv from 'dotenv'
+import type { IncomingMessage, RequestListener, ServerResponse } from 'http'
 
-import { PostgresService } from './controllers/postgres.service'
 import { AuthService } from './controllers/authService'
+import { PostgresService } from './controllers/postgres.service'
 import { homeRoutes, loginRoutes } from './routes/loginRoutes'
-import { userRoutes } from './routes/userRoutes'
+import { passwordResetRoutes } from './routes/passwordResetRoutes'
 import { tokenRoutes } from './routes/tokenRoutes'
-import { url } from 'inspector'
+import { userRoutes } from './routes/userRoutes'
 
 dotenv.config()
 
@@ -39,6 +39,7 @@ const allRoutes = asServerRoutes([
   ...homeRoutes as unknown as ServerRoute[],
   ...loginRoutes as unknown as ServerRoute[],
   ...tokenRoutes as unknown as ServerRoute[],
+  ...passwordResetRoutes as unknown as ServerRoute[],
 ])
 
 async function buildServer() {
