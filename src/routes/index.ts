@@ -3,6 +3,7 @@ import { userRoutes } from './userRoutes';
 import {homeRoutes, loginRoutes} from './loginRoutes';
 import { tokenRoutes } from './tokenRoutes';
 import { passwordResetRoutes } from './passwordResetRoutes';
+import { filtersRoutes } from './filtersRoutes';
 
 export default [
   ...userRoutes,
@@ -10,4 +11,5 @@ export default [
   ...loginRoutes,
   ...tokenRoutes,
   ...passwordResetRoutes,
+  ...filtersRoutes
 ];

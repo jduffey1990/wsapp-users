@@ -10,6 +10,7 @@ import { homeRoutes, loginRoutes } from './routes/loginRoutes'
 import { passwordResetRoutes } from './routes/passwordResetRoutes'
 import { tokenRoutes } from './routes/tokenRoutes'
 import { userRoutes } from './routes/userRoutes'
+import { filtersRoutes } from './routes/filtersRoutes';
 
 dotenv.config()
 
@@ -40,6 +41,7 @@ const allRoutes = asServerRoutes([
   ...loginRoutes as unknown as ServerRoute[],
   ...tokenRoutes as unknown as ServerRoute[],
   ...passwordResetRoutes as unknown as ServerRoute[],
+  ...filtersRoutes as unknown as ServerRoute[],
 ])
 
 async function buildServer() {

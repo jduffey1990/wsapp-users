@@ -4,12 +4,32 @@ import axios from 'axios';
 import bcrypt from 'bcrypt';
 import { EmailService } from '../controllers/email.service';
 import { randomBytes } from 'crypto';
+import Jwt from '@hapi/jwt';
 
 import { UserService } from '../controllers/userService';
 import type { UserSafe } from '../models/user'; // our TS model (id is string UUID)
 
+function rowToUserSafe(row: any): UserSafe {
+  return {
+    id: row.id,
+    companyId: row.company_id ?? null,
+    email: row.email,
+    name: row.name,
+    status: row.status,
+    deletedAt: row.deleted_at ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+const jwtSecret = process.env.JWT_SECRET || '';
 
 async function verifyCaptcha(token: string | null, minScore = 0.5): Promise<{ success: boolean; score: number | null }> {
+  if (process.env.NODE_ENV === 'test' || process.env.BYPASS_CAPTCHA === 'true') {
+    console.log('⚠️  CAPTCHA bypassed for testing');
+    return { success: true, score: 1.0 };
+  }
+
   if (!token) {
     console.warn('No CAPTCHA token provided');
     // During development, you can allow this
@@ -158,6 +178,84 @@ export const userRoutes : ServerRoute[] = [
       return { user };
     },
     options: { auth: 'jwt' },
+  },
+
+
+  // Add this BEFORE the regular /create-user route
+  {
+    method: 'POST',
+    path: '/create-test-user',
+    handler: async (request: Request, h: ResponseToolkit) => {
+      // Only allow in non-production
+      if (process.env.NODE_ENV === 'production') {
+        return h.response({ error: 'Endpoint not available in production' }).code(403);
+      }
+
+      console.log('✅ Using /create-test-user endpoint'); // Debug log
+
+      try {
+        const payload = request.payload as any;
+        
+        const name = payload.name?.toString().trim();
+        
+        if (!payload.email || !payload.password || !name) {
+          return h.response({ 
+            error: 'email, password, and name are required' 
+          }).code(400);
+        }
+        
+        // Hash password
+        const passwordHash = await bcrypt.hash(payload.password, 8);
+        
+        // Create user with explicit status
+        const newUser = await UserService.createUser({
+          email: payload.email.toLowerCase(),
+          name,
+          passwordHash,
+          companyId: payload.companyId ?? null,
+          status: 'active', // Force active for tests
+        });
+        
+        console.log('Created test user:', newUser.id, 'status:', newUser.status);
+        
+        const safe = rowToUserSafe(newUser);
+        // Generate JWT token
+        const token = Jwt.token.generate(
+        { 
+          id: safe.id, 
+          email: safe.email,
+          companyId: safe.companyId,
+          name: safe.name
+        },
+        { 
+          key: jwtSecret,
+          algorithm: 'HS256'
+        },
+        {
+          ttlSec: 7 * 24 * 60 * 60  // ✅ 7 days expiration
+        }
+      );
+        
+        // Return in expected format with token AND user
+        return h.response({ 
+          token,
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+            name: newUser.name,
+            companyId: newUser.companyId,
+            status: newUser.status,
+            createdAt: newUser.createdAt,
+            updatedAt: newUser.updatedAt
+          }
+        }).code(201);
+        
+      } catch (error: any) {
+        console.error('Create test user error:', error);
+        return h.response({ error: error.message }).code(500);
+      }
+    },
+    options: { auth: false }
   },
 
   // Create a new user (public signup)
